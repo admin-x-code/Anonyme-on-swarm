@@ -1,0 +1,1086 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>Technology &amp; Innovation Archives - Anonyome Labs</title>
+	<atom:link href="https://anonyome.com/category/technology-innovation/feed/" rel="self" type="application/rss+xml" />
+	<link>https://anonyome.com</link>
+	<description></description>
+	<lastBuildDate>Tue, 31 Aug 2021 19:24:14 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=5.8.3</generator>
+	<item>
+		<title>Insight: How We Test Our Android Code at Anonyome Labs</title>
+		<link>https://anonyome.com/2021/08/insight-how-we-test-our-android-code-at-anonyome-labs/</link>
+		
+		<dc:creator><![CDATA[Anonyome Labs]]></dc:creator>
+		<pubDate>Tue, 31 Aug 2021 16:05:09 +0000</pubDate>
+				<category><![CDATA[Technology & Innovation]]></category>
+		<guid isPermaLink="false">https://anonyome.com/?p=2567</guid>
+
+					<description><![CDATA[<p>At Anonyome Labs we value well-written code that has good tests. This is a guide on how we go about producing useful and meaningful tests for our Android code. Testing approach: SDK or app? Testing code isn’t a “one approach fits all” affair. The nature of the code you want to test will dictate the [&#8230;]</p>
+<p>The post <a rel="nofollow" href="https://anonyome.com/2021/08/insight-how-we-test-our-android-code-at-anonyome-labs/">Insight: How We Test Our Android Code at Anonyome Labs</a> appeared first on <a rel="nofollow" href="https://anonyome.com">Anonyome Labs</a>.</p>
+]]></description>
+										<content:encoded><![CDATA[
+<h4>At Anonyome Labs we value well-written code that has good tests. This is a guide on how we go about producing useful and meaningful tests for our Android code.</h4>
+
+
+
+<p></p>
+
+
+
+<p></p>
+
+
+
+<p></p>
+
+
+
+<h3><strong>Testing approach: SDK or app?</strong></h3>
+
+
+
+<p></p>
+
+
+
+<p>Testing code isn’t a “one approach fits all” affair. The nature of the code you want to test will dictate the strategy you should employ. For example:</p>
+
+
+
+<ul><li><strong>Building an SDK?&nbsp;</strong><br>Unit tests that use a mock environment will give good coverage of hard-to-reach error paths, plus integration tests that run on Android device or emulator will exercise real world behaviour.</li><li><strong>Creating an app?</strong>&nbsp;<br>Unit tests that use a mock environment plus Espresso visual tests that exercise all the visual elements and the screen-to-screen navigation will give you confidence all is well.</li></ul>
+
+
+
+<p>Your desire to test your code well will often mean you will structure your code in a way that makes it easier to test. It might make it a little more complicated than you had originally intended, by causing you to make parts of it replaceable when under test, but don’t be shy of this. Good tests will give you confidence in your code and give the next person who has to maintain it confidence they have not broken anything.</p>
+
+
+
+<h3><strong>Unit tests that use a mock environment</strong></h3>
+
+
+
+<p></p>
+
+
+
+<p>Writing tests that run your code under the control of&nbsp;<a href="https://junit.org/junit5/" target="_blank" rel="noreferrer noopener">JUnit</a>&nbsp;or&nbsp;<a href="http://robolectric.org/" target="_blank" rel="noreferrer noopener">Robolectric</a>&nbsp;with a mocking library, such as&nbsp;<a href="https://github.com/mockito/mockito-kotlin" target="_blank" rel="noreferrer noopener">Mockito</a>, will allow you to replace the code you didn’t write with mock or spy versions. When the tests run your code, they can check it made all the right calls. You can use these mocks to cause exceptions to be thrown from all the different places where an error can occur and check your code handles them correctly. In many cases, trying to test the error paths without using mocks and spies can be very difficult.</p>
+
+
+
+<p>Imagine you have created a nice new API and you want to test it. Here is a very simple example:</p>
+
+
+
+<figure class="wp-block-image size-large"><img loading="lazy" width="1024" height="472" src="https://anonyome.com/wp-content/uploads/2021/08/Image-1-1-1024x472.png" alt="" class="wp-image-2571" srcset="https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-1-1-1024x472.png 1024w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-1-1-300x138.png 300w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-1-1-768x354.png 768w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-1-1-87x40.png 87w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-1-1-570x263.png 570w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-1-1.png 1522w" sizes="(max-width: 1024px) 100vw, 1024px" /></figure>
+
+
+
+<p>At point&nbsp;<strong>A</strong>&nbsp;in&nbsp;MyApi&nbsp;you can see that the&nbsp;Worker, which simulates some other system your API needs to use, is provided to the API in the constructor which will allow you to override it in tests.&nbsp;</p>
+
+
+
+<p>Here is a test you might write to exercise the API and check the API does what you intend under normal operation and that the error conditions are handled correctly under abnormal conditions:</p>
+
+
+
+<figure class="wp-block-image size-large"><img loading="lazy" width="1024" height="753" src="https://anonyome.com/wp-content/uploads/2021/08/Image-2-1-1024x753.png" alt="" class="wp-image-2572" srcset="https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-2-1-1024x753.png 1024w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-2-1-300x221.png 300w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-2-1-768x565.png 768w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-2-1-54x40.png 54w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-2-1-434x319.png 434w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-2-1.png 1520w" sizes="(max-width: 1024px) 100vw, 1024px" /></figure>
+
+
+
+<figure class="wp-block-image size-large"><img loading="lazy" width="1024" height="521" src="https://anonyome.com/wp-content/uploads/2021/08/Image-3-1-1024x521.png" alt="" class="wp-image-2573" srcset="https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-3-1-1024x521.png 1024w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-3-1-300x153.png 300w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-3-1-768x391.png 768w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-3-1-79x40.png 79w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-3-1-570x290.png 570w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-3-1.png 1522w" sizes="(max-width: 1024px) 100vw, 1024px" /></figure>
+
+
+
+<p>At&nbsp;<strong>B</strong>&nbsp;in&nbsp;<code>MyApiTest,</code>&nbsp;a&nbsp;<code>mockWorker</code>&nbsp;is created that replaces the real&nbsp;<code>Worker</code>&nbsp;at&nbsp;<strong>C</strong>. This allows you to control the behaviour of the&nbsp;<code>Worker</code>&nbsp;and get it to misbehave when you need it to in the tests that check handling of error conditions.</p>
+
+
+
+<p>At&nbsp;<strong>D</strong>&nbsp;in&nbsp;<code>MyApiTest,</code>&nbsp;the&nbsp;<code>fini</code>&nbsp;method is annotated so that it is run after (<code>@After</code>) each test (<code>@Test</code>). It checks that the test that has just been run has correctly verified that every interaction by your API with the mock has been accounted for with a&nbsp;<code>verify</code>&nbsp;call. This will trap any unexpected interactions by your API with the&nbsp;<code>Worker</code>.</p>
+
+
+
+<p>At&nbsp;<strong>E&nbsp;</strong>in<strong>&nbsp;</strong><code>MyApiTest,</code>&nbsp;the&nbsp;<code>mockWorker</code>&nbsp;is changed for just that test to throw an exception instead of returning a result. This allows you to check that all the error conditions that can occur are dealt with by your API.</p>
+
+
+
+<p>Other interesting aspects to note about this test are:</p>
+
+
+
+<ul><li>The test methods have unusual names. They provide a description of what the test is doing and the expected outcome. They often have the form&nbsp;<code>`&lt;method name&gt; should &lt;do|not do&gt; &lt;something&gt;`.</code></li><li>There are many powerful testing libraries that can make your test easier to read and maintain. The&nbsp;<code>shouldThrow</code>&nbsp;method is used to check that the&nbsp;<code>doWork</code>&nbsp;method throws an exception and that it is the the correct exception.</li><li>The comments&nbsp;<code>given</code>,&nbsp;<code>when</code>&nbsp;and&nbsp;<code>then</code>&nbsp;are encouraged because they make the tests easier to read and make it clear which part of the code is setup, invocation and checking for expected results.</li></ul>
+
+
+
+<h3><strong>Spy versus mock</strong></h3>
+
+
+
+<p></p>
+
+
+
+<p>There are situations where using a spy instead of a mock object may be beneficial. A mock is appropriate when you want to replace all the methods of an object. A spy can be used to replace a small number of methods on a real object. This is particularly useful on objects with many methods.</p>
+
+
+
+<p>Imagine you have an API that uses&nbsp;<code>android.content.Context</code>&nbsp;which is a very common class with many methods.</p>
+
+
+
+<figure class="wp-block-image size-large"><img loading="lazy" width="1024" height="510" src="https://anonyome.com/wp-content/uploads/2021/08/Image-4-1024x510.png" alt="" class="wp-image-2574" srcset="https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-4-1024x510.png 1024w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-4-300x149.png 300w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-4-768x382.png 768w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-4-80x40.png 80w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-4-570x284.png 570w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-4.png 1518w" sizes="(max-width: 1024px) 100vw, 1024px" /></figure>
+
+
+
+<p>And of course you want to test it well but mocking out the&nbsp;Context&nbsp;class would be tiresome — after all, your API only uses one method. This is where a spy is useful.</p>
+
+
+
+<figure class="wp-block-image size-large"><img loading="lazy" width="1024" height="884" src="https://anonyome.com/wp-content/uploads/2021/08/Image-5-1024x884.png" alt="" class="wp-image-2575" srcset="https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-5-1024x884.png 1024w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-5-300x259.png 300w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-5-768x663.png 768w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-5-46x40.png 46w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-5-370x319.png 370w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-5.png 1518w" sizes="(max-width: 1024px) 100vw, 1024px" /></figure>
+
+
+
+<figure class="wp-block-image size-large"><img loading="lazy" width="1024" height="459" src="https://anonyome.com/wp-content/uploads/2021/08/Image-6-1024x459.png" alt="" class="wp-image-2576" srcset="https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-6-1024x459.png 1024w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-6-300x135.png 300w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-6-768x345.png 768w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-6-89x40.png 89w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-6-570x256.png 570w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-6.png 1520w" sizes="(max-width: 1024px) 100vw, 1024px" /></figure>
+
+
+
+<h3><strong>Testing on an Android device or emulator</strong></h3>
+
+
+
+<p></p>
+
+
+
+<p>Testing with mocks under the control of&nbsp;<code>JUnit</code>&nbsp;or&nbsp;<code>Robolectric</code>&nbsp;is a great way to really exercise your code, but it’s not the real world. Writing a test that runs on Android and makes use of the real environment will give you an extra level of confidence that you are using the right APIs on the platform and that you are using the environment correctly and have all the necessary permissions. This is very valuable when you are dealing with connections over a network, local databases or any other type of specialised API.&nbsp;</p>
+
+
+
+<figure class="wp-block-image size-large"><img loading="lazy" width="1024" height="536" src="https://anonyome.com/wp-content/uploads/2021/08/Image-7-1024x536.png" alt="" class="wp-image-2577" srcset="https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-7-1024x536.png 1024w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-7-300x157.png 300w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-7-768x402.png 768w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-7-76x40.png 76w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-7-570x298.png 570w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-7.png 1524w" sizes="(max-width: 1024px) 100vw, 1024px" /></figure>
+
+
+
+<p>This test focuses on checking that the API operates correctly under normal conditions when run on an Android device or emulator. Interesting aspects of this test are:</p>
+
+
+
+<ul><li>The method names have to be proper Java identifiers to be run on Android.&nbsp;</li><li>A different runtime environment is required for on device tests (<code>@RunWith(AndroidJUnit4::class)</code>).</li><li>No mocks are being used.</li></ul>
+
+
+
+<p>It is possible that setting up an integration test that can authenticate with your servers to run the tests may be difficult. This will depend on the nature of your API and authentication mechanisms. Don’t immediately throw this in the ‘too hard basket.’ At Anonyome we design our systems so that we always have a test authentication mechanism that can be used instead of the production authentication system by developers during development and by automated tests. Naturally this must be done very carefully to avoid introducing a security hole, but if you can achieve this you will have a well-tested system in which you will have confidence.</p>
+
+
+
+<h3><strong>Testing an app screen</strong></h3>
+
+
+
+<p></p>
+
+
+
+<p>When building an app, it is good practice to structure your code so that each screen can be tested thoroughly in isolation. Generally at Anonyome we use the VIPER design pattern for each of our screens. This pattern leads us to naturally break up the parts of each screen into pieces that can be easily separated. Each piece is supplied with the APIs it needs, usually at construction, making it easy to mock these pieces and then use the&nbsp;<code>verify</code>&nbsp;and&nbsp;<code>verifyNoMoreInteractions</code>&nbsp;methods to check we have accounted for all the places our screen interacts with other parts of the app.</p>
+
+
+
+<p>Here is a simplified example of a screen implemented as a VIPER module:</p>
+
+
+
+<figure class="wp-block-image size-large"><img loading="lazy" width="934" height="1024" src="https://anonyome.com/wp-content/uploads/2021/08/Image-8-934x1024.png" alt="" class="wp-image-2578" srcset="https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-8-934x1024.png 934w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-8-274x300.png 274w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-8-768x842.png 768w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-8-1401x1536.png 1401w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-8-36x40.png 36w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-8-291x319.png 291w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-8.png 1520w" sizes="(max-width: 934px) 100vw, 934px" /></figure>
+
+
+
+<p>Because the classes of the screen communicate to each other through interfaces, it is easy to test each part of the screen in isolation. Here is an example of how the presenter test might look:</p>
+
+
+
+<figure class="wp-block-image size-large"><img loading="lazy" width="1024" height="734" src="https://anonyome.com/wp-content/uploads/2021/08/Image-9-1024x734.png" alt="" class="wp-image-2579" srcset="https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-9-1024x734.png 1024w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-9-300x215.png 300w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-9-768x550.png 768w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-9-56x40.png 56w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-9-445x319.png 445w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-9.png 1516w" sizes="(max-width: 1024px) 100vw, 1024px" /></figure>
+
+
+
+<h3><strong>Visual testing with Espresso</strong></h3>
+
+
+
+<p></p>
+
+
+
+<p>While it’s good practice to test all your screens in isolation with unit tests and mocks, this can’t give you confidence that your app actually hangs together. Unit tests can’t check that the flow of screens in your app is correct and that the right screen is shown in the right order. This is where visual testing with Espresso comes in.</p>
+
+
+
+<p>Espresso tests invoke an&nbsp;<code>Activity</code>&nbsp;within your app and then simulate clicking on views, entering text, scrolling and all the other actions a real user would perform.&nbsp;</p>
+
+
+
+<p>There are many&nbsp;<a href="https://developer.android.com/training/testing/espresso" target="_blank" rel="noreferrer noopener">articles</a>&nbsp;on how to write Espresso tests available on the Android Developers site and elsewhere, so I won’t repeat that material here.</p>
+
+
+
+<p>When you start developing an Espresso test for the first time using the Espresso APIs you very quickly end up with a test with hundreds of lines of calls of the Espresso methods. This usually results in a long test that can be very difficult to understand for developers who have to maintain the code after you.</p>
+
+
+
+<p>To combat this there is a pattern for developing Espresso tests that we have adopted at Anonyome. We use a robot pattern for our tests. Each screen of your app has an associated robot that knows about the controls of that screen and sometimes how to navigate to it from when the app is launched.</p>
+
+
+
+<figure class="wp-block-image size-large"><img loading="lazy" width="1024" height="830" src="https://anonyome.com/wp-content/uploads/2021/08/Image-10-1024x830.png" alt="" class="wp-image-2580" srcset="https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-10-1024x830.png 1024w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-10-300x243.png 300w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-10-768x622.png 768w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-10-49x40.png 49w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-10-394x319.png 394w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-10.png 1520w" sizes="(max-width: 1024px) 100vw, 1024px" /></figure>
+
+
+
+<p>Using the robot the test becomes much simpler and easier to maintain:</p>
+
+
+
+<figure class="wp-block-image size-large"><img loading="lazy" width="1024" height="538" src="https://anonyome.com/wp-content/uploads/2021/08/Image-11-1024x538.png" alt="" class="wp-image-2581" srcset="https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-11-1024x538.png 1024w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-11-300x158.png 300w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-11-768x404.png 768w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-11-76x40.png 76w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-11-570x300.png 570w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-11.png 1518w" sizes="(max-width: 1024px) 100vw, 1024px" /></figure>
+
+
+
+<h3><strong>Recipes</strong></h3>
+
+
+
+<p></p>
+
+
+
+<h4>@VisibleForTesting<strong></strong></h4>
+
+
+
+<p>There may be parts of your app that you need to expose to test code so that it can check for correct operation. This can be done by making those parts more widely visible and annotating them with&nbsp;<code>@VisibleForTesting</code>which tells the IDE that only tests can exploit the wider visibility of this item.</p>
+
+
+
+<figure class="wp-block-image size-large"><img loading="lazy" width="1024" height="377" src="https://anonyome.com/wp-content/uploads/2021/08/Image-12-1024x377.png" alt="" class="wp-image-2582" srcset="https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-12-1024x377.png 1024w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-12-300x110.png 300w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-12-768x283.png 768w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-12-109x40.png 109w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-12-570x210.png 570w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-12-370x137.png 370w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-12.png 1522w" sizes="(max-width: 1024px) 100vw, 1024px" /></figure>
+
+
+
+<h3><strong>Capturing arguments from calls to mocks</strong></h3>
+
+
+
+<p></p>
+
+
+
+<p>When using a mock there may be times that at the end of the test you want to check that not only was the method of the mock called but it was called with the correct arguments.&nbsp;</p>
+
+
+
+<p>When you only want to check a few of the arguments of the call there is the&nbsp;<code>argThat</code>&nbsp;matcher that can help. In this example we want to verify that our code invoked an&nbsp;<code>Activity</code>&nbsp;with the correct action.</p>
+
+
+
+<figure class="wp-block-image size-large"><img loading="lazy" width="1024" height="152" src="https://anonyome.com/wp-content/uploads/2021/08/Image-13-1024x152.png" alt="" class="wp-image-2583" srcset="https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-13-1024x152.png 1024w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-13-300x45.png 300w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-13-768x114.png 768w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-13-258x38.png 258w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-13-269x40.png 269w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-13-570x85.png 570w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-13.png 1520w" sizes="(max-width: 1024px) 100vw, 1024px" /></figure>
+
+
+
+<p>If you have more complicated checks that you wish to perform on the method arguments, you can capture the value(s) with an&nbsp;argumentCaptor&nbsp;and perform all sorts of checks. In this example we want to verify that our code invoked an&nbsp;Activity&nbsp;with the correct information inside the&nbsp;Intent.</p>
+
+
+
+<figure class="wp-block-image size-large"><img loading="lazy" width="1024" height="310" src="https://anonyome.com/wp-content/uploads/2021/08/Image-14-1024x310.png" alt="" class="wp-image-2584" srcset="https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-14-1024x310.png 1024w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-14-300x91.png 300w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-14-768x233.png 768w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-14-132x40.png 132w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-14-570x173.png 570w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/08/Image-14.png 1524w" sizes="(max-width: 1024px) 100vw, 1024px" /></figure>
+
+
+
+<h3><strong>Conclusion</strong></h3>
+
+
+
+<p></p>
+
+
+
+<p>If you are building an app, use a combination of unit tests and Espresso tests to give you excellent coverage and confidence your app is working properly. If it’s an SDK, then the combination of unit tests and integration tests will do the same.&nbsp;</p>
+
+
+
+<p>To take advantage of the full power of mocks and spies in unit tests, you may have to structure your code so that is exposes the interfaces your code uses to communicate with other parts of the app or operating system. This will allow you to thoroughly check all the paths through your code.</p>
+
+
+
+<p>Use the robot pattern to make your Espresso tests concise, readable and maintainable.&nbsp;</p>
+<p>The post <a rel="nofollow" href="https://anonyome.com/2021/08/insight-how-we-test-our-android-code-at-anonyome-labs/">Insight: How We Test Our Android Code at Anonyome Labs</a> appeared first on <a rel="nofollow" href="https://anonyome.com">Anonyome Labs</a>.</p>
+]]></content:encoded>
+					
+		
+		
+			</item>
+		<item>
+		<title>Anonyome Labs Joins the Indicio MainNet</title>
+		<link>https://anonyome.com/2021/05/anonyome-labs-joins-the-indicio-mainnet/</link>
+		
+		<dc:creator><![CDATA[Anonyome Labs]]></dc:creator>
+		<pubDate>Wed, 26 May 2021 13:40:00 +0000</pubDate>
+				<category><![CDATA[Technology & Innovation]]></category>
+		<guid isPermaLink="false">https://anonyome.com/?p=2399</guid>
+
+					<description><![CDATA[<p>Anonyome Labs strives to support the decentralized identity community and to further enhance interoperability between different networks. Doing this also helps us&#160;grow and strengthen&#160;our&#160;Sudo Platform&#160;decentralized identity services. We put privacy at the forefront of our solutions; protecting personal data and individual privacy and upholding international privacy standards are&#160;central&#160;to our core values.&#160;So&#160;we were excited to be [&#8230;]</p>
+<p>The post <a rel="nofollow" href="https://anonyome.com/2021/05/anonyome-labs-joins-the-indicio-mainnet/">Anonyome Labs Joins the Indicio MainNet</a> appeared first on <a rel="nofollow" href="https://anonyome.com">Anonyome Labs</a>.</p>
+]]></description>
+										<content:encoded><![CDATA[
+<p>Anonyome Labs strives to support the decentralized identity community and to further enhance interoperability between different networks. Doing this also helps us&nbsp;grow and strengthen&nbsp;our&nbsp;<a href="https://sudoplatform.com/" target="_blank" rel="noreferrer noopener">Sudo Platform</a>&nbsp;decentralized identity services. We put privacy at the forefront of our solutions; protecting personal data and individual privacy and upholding international privacy standards are&nbsp;central&nbsp;to our core values.&nbsp;So&nbsp;we were excited to be invited to join the Indicio MainNet as a validator node operator and to set up the&nbsp;ledger’s&nbsp;10<sup>th</sup>&nbsp;node.&nbsp;&nbsp;</p>
+
+
+
+<p>Here, we go through how we went about standing up our Indico node.&nbsp;In brief:&nbsp;</p>
+
+
+
+<ul><li>The Indicio MainNet is an enterprise-grade ledger for&nbsp;use by&nbsp;decentralized&nbsp;identity&nbsp;applications.&nbsp;</li><li>We&nbsp;brought up&nbsp;the node&nbsp;using&nbsp;AWS&nbsp;Elastic Cloud Computing (EC2) instances within a&nbsp;Virtual Private Cloud (VPC).&nbsp;</li><li>We pulled the&nbsp;validator&nbsp;algorithms from the open-source project,&nbsp;<a href="https://www.hyperledger.org/use/hyperledger-indy" target="_blank" rel="noreferrer noopener">Hyperledger Indy</a>.&nbsp;</li><li>A supporting machine operates the&nbsp;command line interface used to&nbsp;perform steward operations onthe ledger.&nbsp;</li><li>We used security&nbsp;groups at&nbsp;the&nbsp;network interface level to create a firewall.&nbsp;</li><li>We set up monitoring&nbsp;in AWS CloudWatch using&nbsp;a variety of&nbsp;bash scripting in conjunction with&nbsp;Ubuntu&nbsp;and AWS provided utilities.&nbsp;&nbsp;</li><li>We created a&nbsp;regular maintenance schedule.&nbsp;</li></ul>
+
+
+
+<p>The Indicio MainNet&nbsp;is an&nbsp;<a href="https://indicio.tech/indicio-mainnet/" target="_blank" rel="noreferrer noopener">enterprise-grade&nbsp;network</a>&nbsp;for&nbsp;use by&nbsp;decentralized&nbsp;identity&nbsp;applications. It is a&nbsp;distributed ledger&nbsp;which&nbsp;allows&nbsp;decentralized&nbsp;identifiers, verifiable credential&nbsp;schemas&nbsp;and other non-personally identifiable information to be written to it.&nbsp;&nbsp;</p>
+
+
+
+<p>MainNet is based on&nbsp;<a href="https://www.hyperledger.org/use/hyperledger-indy" target="_blank" rel="noreferrer noopener">Hyperledger Indy</a>, an open-source project for distributed ledgers.&nbsp;A&nbsp;number of Hyperledger Indy&nbsp;ledgers exist for a variety of purposes.&nbsp;A different provider runs each ledger (e.g.&nbsp;the&nbsp;<a href="https://sovrin.org/" target="_blank" rel="noreferrer noopener">Sovrinnetwork</a>).&nbsp;All Indy-based ledgers are&nbsp;intended to be&nbsp;interoperable&nbsp;by design,&nbsp;meaning their DIDs, DIDs methods and DID Docs are cross-ledger compatible.&nbsp;Anonyome Labs supports compatibility with different Indy-based ledgers.&nbsp;&nbsp;</p>
+
+
+
+<p>As an emerging&nbsp;developer of&nbsp;decentralized&nbsp;identity&nbsp;software,&nbsp;we know&nbsp;relationships with existing ledgers areinvaluable, so&nbsp;when&nbsp;new ledgers are brought up in the&nbsp;decentralized&nbsp;identity&nbsp;space,&nbsp;our team finds opportunities to&nbsp;get&nbsp;involved.&nbsp;In this case, we were proud to be invited to&nbsp;join the Indicio&nbsp;Node&nbsp;Operator Program&nbsp;to&nbsp;run a&nbsp;production level&nbsp;MainNet&nbsp;ledger node.&nbsp;</p>
+
+
+
+<p>Some&nbsp;technical requirements&nbsp;must be met&nbsp;to become a&nbsp;validator&nbsp;on the Indicio MainNet.&nbsp;Since&nbsp;Anonyome joined&nbsp;the&nbsp;MainNet directly&nbsp;(i.e.,&nbsp;as opposed to progressing through sandboxed test environments first),&nbsp;we made&nbsp;additional security and efficiency decisions to ensure&nbsp;we set up&nbsp;a robust&nbsp;validator&nbsp;node.&nbsp;&nbsp;</p>
+
+
+
+<h3>The&nbsp;two&nbsp;nodes&nbsp;</h3>
+
+
+
+<p></p>
+
+
+
+<p>Figure 1 shows the&nbsp;architecture of the&nbsp;validator&nbsp;node and supporting systems. The&nbsp;validator&nbsp;node runs the&nbsp;validator&nbsp;algorithms developed under the open-sourced project Hyperledger Indy.&nbsp;We set up another&nbsp;node to run the&nbsp;command line interface&nbsp;(CLI) used to interact with the ledger.&nbsp;While it was not a requirement for the CLI node to be&nbsp;hosted on&nbsp;an AWS server, it better suited&nbsp;our use case&nbsp;because it kept the&nbsp;node&nbsp;accessible.&nbsp;We have&nbsp;node&nbsp;administrators across Australian and US&nbsp;time zones, so&nbsp;it was desirable to&nbsp;host the CLI on an EC2 instance that all administrators&nbsp;could&nbsp;manage&nbsp;at any time.&nbsp;&nbsp;</p>
+
+
+
+<p>Both of these nodes run&nbsp;Ubuntu&nbsp;16.04 LTS&nbsp;(an upgrade to Ubuntu 20.04 is imminent), with the CLI&nbsp;node&nbsp;as a t2.micro&nbsp;instance&nbsp;and the&nbsp;validator&nbsp;node as a t3.xlarge&nbsp;instance.&nbsp;T2 and T3 are different EC2 instance types offered by Amazon. Each of these instance types offer tiers that differ in CPU, RAM and billing prices. In terms of memory,&nbsp;we allocated&nbsp;the&nbsp;CLI node&nbsp;one disk with&nbsp;10GB. This is sufficient for the administrative duties carried out on that node.&nbsp;We allocated the&nbsp;validator&nbsp;instance two disks, one with 10GB EBS and the other with 250GB EBS. The 250GB disk is&nbsp;used for the Indy ledger databases. All of these disks are&nbsp;also volume level&nbsp;encrypted, and&nbsp;we allocated&nbsp;an&nbsp;extra&nbsp;2&nbsp;CPUs&nbsp;to&nbsp;the&nbsp;validator&nbsp;node to&nbsp;account for the&nbsp;extra level&nbsp;of encryption.Our nodes run in AWS&nbsp;Asia Pacific (Sydney)&nbsp;<em>ap-southeast-2</em>.&nbsp;</p>
+
+
+
+<figure class="wp-block-image size-large"><img loading="lazy" width="808" height="526" src="https://anonyome.com/wp-content/uploads/2021/05/Figure-1.png" alt="" class="wp-image-2400" srcset="https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/05/Figure-1.png 808w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/05/Figure-1-300x195.png 300w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/05/Figure-1-768x500.png 768w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/05/Figure-1-61x40.png 61w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/05/Figure-1-490x319.png 490w" sizes="(max-width: 808px) 100vw, 808px" /><figcaption><em>Figure 1:&nbsp;The&nbsp;validator&nbsp;node and the CLI&nbsp;node</em>&nbsp;</figcaption></figure>
+
+
+
+<p>The&nbsp;validator&nbsp;node&nbsp;provides&nbsp;capacity to run&nbsp;the&nbsp;validator&nbsp;consensus&nbsp;algorithm&nbsp;which&nbsp;keeps&nbsp;its&nbsp;node database in sync with the network.&nbsp;The&nbsp;CLI&nbsp;node&nbsp;is used for&nbsp;ledger related operations and&nbsp;validator&nbsp;node&nbsp;administration.&nbsp;The separation&nbsp;is for security purposes,&nbsp;because&nbsp;the two tasks require different firewall settings and stored credentials.&nbsp;&nbsp;</p>
+
+
+
+<p>Figure 1&nbsp;also&nbsp;shows&nbsp;two subnets:&nbsp;a public&nbsp;subnet&nbsp;and&nbsp;an&nbsp;inter-validator subnet. Within&nbsp;these two&nbsp;subnets&nbsp;are three network interfaces:&nbsp;</p>
+
+
+
+<ol><li>the&nbsp;CLI&nbsp;interface&nbsp;</li></ol>
+
+
+
+<ol start="2"><li>the&nbsp;client-to-validator network interface&nbsp;</li></ol>
+
+
+
+<ol start="3"><li>the&nbsp;validator-to-validator network interface.&nbsp;</li></ol>
+
+
+
+<p>There is a single network interface attached to the CLI instance. This is called&nbsp;the CLI network interface. It resides within the public subnet&nbsp;to provide&nbsp;an endpoint for communications involving ledger utility.&nbsp;This includes SSH requests from the Anonyome node administrators,&nbsp;access to software repositories, and access to CloudWatch alarms for monitoring.&nbsp;</p>
+
+
+
+<p>There are two network interfaces attached to the&nbsp;validator&nbsp;node:&nbsp;the validator-to-validator network interface and the client-to-validator network interface.&nbsp;The&nbsp;validator-to-validator network interface resides within the inter-validator subnet.&nbsp;An&nbsp;AWS elastic IP&nbsp;endpoint within the inter-validator subnet allows for&nbsp;communication with other validator nodes.&nbsp;</p>
+
+
+
+<p>The client-to-validator network interface is in the public subnet. This&nbsp;provides&nbsp;a&nbsp;publicly exposed endpoint,used&nbsp;for&nbsp;cloud agent and wallet&nbsp;communications to the validator node.&nbsp;&nbsp;</p>
+
+
+
+<h3>Security&nbsp;groups&nbsp;as a&nbsp;firewall&nbsp;</h3>
+
+
+
+<p></p>
+
+
+
+<p>The firewall is implemented&nbsp;using&nbsp;AWS security groups that are added to network interfaces.&nbsp;Security groups&nbsp;<a href="https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html" target="_blank" rel="noreferrer noopener">control inbound and outbound traffic</a>, allowing administrators to limit traffic to certain addresses on specific ports and message protocols. As the security groups are implemented at the network interface level, different interfaces could be assigned a different firewall.&nbsp;&nbsp;</p>
+
+
+
+<p>Security groups contain rules that permit or deny certain IP addresses over specific protocols. Such rules target certain types of traffic. For example, there may be a rule that&nbsp;permits SSH requests from certain IP addresses into the nodes.&nbsp;Another permissible rule could be for outbound traffic to the address of AWS CloudWatch to send monitoring updates&nbsp;over the HTTPS protocol.&nbsp;The three network interfaces have differentsets of&nbsp;security groups&nbsp;determined by&nbsp;what types of traffic are permitted and denied&nbsp;for&nbsp;each network interface.&nbsp;</p>
+
+
+
+<h3>Monitoring&nbsp;the&nbsp;nodes&nbsp;&nbsp;</h3>
+
+
+
+<p></p>
+
+
+
+<p>Monitoring is set up using&nbsp;<a href="https://aws.amazon.com/cloudwatch/" target="_blank" rel="noreferrer noopener">AWS CloudWatch</a>,&nbsp;Slack&nbsp;hooks and bash scripts.&nbsp;We chose&nbsp;CloudWatch&nbsp;so we could&nbsp;set up alarms on custom metrics.&nbsp;Metrics are values of certain node states that&nbsp;must be&nbsp;monitored, such as&nbsp;any files with permissions&nbsp;that leave them vulnerable&nbsp;to compromise.&nbsp;Anonyome uses&nbsp;a cron job&nbsp;thatperiodically runs&nbsp;a script to&nbsp;monitor&nbsp;certain system states&nbsp;and writes these states&nbsp;to a log file.&nbsp;The same cron job also runs another&nbsp;script&nbsp;that&nbsp;then reads the log file and posts the state of each metric to CloudWatch. If the metric is in a predefined alarmable state, CloudWatch will run a Lambda function that posts a&nbsp;warning message&nbsp;to a dedicated Slack monitoring channel.&nbsp;This is how Anonyome&nbsp;administrators&nbsp;monitor the Indicio nodes.&nbsp;You can see this approach in Figure 2.&nbsp;&nbsp;</p>
+
+
+
+<figure class="wp-block-image size-large"><img loading="lazy" width="612" height="468" src="https://anonyome.com/wp-content/uploads/2021/05/Figure-2.png" alt="" class="wp-image-2401" srcset="https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/05/Figure-2.png 612w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/05/Figure-2-300x229.png 300w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/05/Figure-2-52x40.png 52w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/05/Figure-2-417x319.png 417w" sizes="(max-width: 612px) 100vw, 612px" /><figcaption><em>Figure 2:&nbsp;We monitor the&nbsp;validator&nbsp;and CLI nodes using&nbsp;</em><a href="https://aws.amazon.com/cloudwatch/" target="_blank" rel="noreferrer noopener"><em>AWS CloudWatch</em></a><em>, Slack hooks and bash scripts</em>&nbsp;</figcaption></figure>
+
+
+
+<h3>Going&nbsp;forward&nbsp;</h3>
+
+
+
+<p></p>
+
+
+
+<p>After joining MainNet, nodes need to be kept up to date with the latest software.&nbsp;Node administrators are responsible for updating security&nbsp;patches every week&nbsp;where necessary.&nbsp;We have set up an&nbsp;AMI management policy to create&nbsp;timely&nbsp;backups of the validator and CLI nodes.&nbsp;&nbsp;</p>
+
+
+
+<p>You now can see our&nbsp;node active on&nbsp;<a href="https://indymonitor.indiciotech.io/d/EunDUuJGk/indicio-main-network?orgId=2&amp;refresh=10s" target="_blank" rel="noreferrer noopener">MainNet monitoring tools</a>.&nbsp;</p>
+
+
+
+<p style="font-size:15px">Photo By&nbsp;<a class="" href="https://www.shutterstock.com/g/Krueatip">Chan2545</a></p>
+<p>The post <a rel="nofollow" href="https://anonyome.com/2021/05/anonyome-labs-joins-the-indicio-mainnet/">Anonyome Labs Joins the Indicio MainNet</a> appeared first on <a rel="nofollow" href="https://anonyome.com">Anonyome Labs</a>.</p>
+]]></content:encoded>
+					
+		
+		
+			</item>
+		<item>
+		<title>Our Recent Upgrade to Our Sovrin Network Validator Node in Australia Supports the Decentralized Identity Community</title>
+		<link>https://anonyome.com/2021/02/our-recent-upgrade-to-our-sovrin-network-validator-node-in-australia-supports-the-decentralized-identity-community/</link>
+		
+		<dc:creator><![CDATA[Anonyome Labs]]></dc:creator>
+		<pubDate>Wed, 17 Feb 2021 19:35:09 +0000</pubDate>
+				<category><![CDATA[Technology & Innovation]]></category>
+		<guid isPermaLink="false">https://anonyome.com/?p=2311</guid>
+
+					<description><![CDATA[<p>In this article we walk you through our recent upgrade of our validator node on the Sovrin network. This is a detailed read, but in short: Anonyome Labs is proud to host a validator node on the&#160;Sovrin&#160;network. We recently upgraded the Anonyome validator node to conform to the latest technical and organisational requirements for being [&#8230;]</p>
+<p>The post <a rel="nofollow" href="https://anonyome.com/2021/02/our-recent-upgrade-to-our-sovrin-network-validator-node-in-australia-supports-the-decentralized-identity-community/">Our Recent Upgrade to Our Sovrin Network Validator Node in Australia Supports the Decentralized Identity Community</a> appeared first on <a rel="nofollow" href="https://anonyome.com">Anonyome Labs</a>.</p>
+]]></description>
+										<content:encoded><![CDATA[
+<p>In this article we walk you through our recent upgrade of our validator node on the Sovrin network. This is a detailed read, but in short:</p>
+
+
+
+<ul><li>Anonyome Labs is proud to host a validator node on the&nbsp;<a href="https://sovrin.org/" target="_blank" rel="noreferrer noopener">Sovrin</a>&nbsp;network.</li><li>We recently upgraded the Anonyome validator node to conform to the latest technical and organisational requirements for being a Sovrin Steward.</li><li>We upgraded our node’s server hardware specifications, reviewed our security polices and reconfigured our network configuration.&nbsp;</li><li>Given the importance of each individual node to the performance of the overall Sovrin network, we took a very meticulous approach to upgrading our node.&nbsp;</li><li>We are proudly the&nbsp;<a href="https://www.globenewswire.com/news-release/2018/12/13/1666366/0/en/Sovrin-Network-Continues-Strong-Momentum-with-Four-New-Founding-Stewards.html" target="_blank" rel="noreferrer noopener">first Sovrin Steward to host a node in Australia</a>.&nbsp;</li></ul>
+
+
+
+<h3><strong>Now, let’s dive into the detail. </strong></h3>
+
+
+
+<p></p>
+
+
+
+<p>In 2018, Anonyome joined the&nbsp;<a href="https://sovrin.org/" target="_blank" rel="noreferrer noopener">Sovrin Foundation</a>&nbsp;as a&nbsp;<a href="https://sovrin.org/stewards/" target="_blank" rel="noreferrer noopener">Founding Steward</a>. As a global non-profit consortium, the Sovrin Foundation aims to give the control of digital identities back to the people by enabling&nbsp;<a href="https://anonyome.com/2019/08/self-sovereign-identities/" target="_blank" rel="noreferrer noopener">self-sovereign identity</a>&nbsp;(SSI) for all. It does this through the governance of the Sovrin network – a decentralized ledger for identity.&nbsp;</p>
+
+
+
+<p>The Sovrin network is underpinned by distributed ledger technology (DLT) based on&nbsp;<a href="https://www.youtube.com/watch?v=UJbJRqur4ng" target="_blank" rel="noreferrer noopener">Hyperledger Indy</a>, a ledger system that is replicated by multiple entities across multiple locations. The replication of the network is known as decentralization and it prevents a single authority from gaining control of the data. A well-known example of a DLT being used today is the Bitcoin blockchain, where entities known as miners replicate and contribute to the ledger.&nbsp;</p>
+
+
+
+<p>Unlike the Bitcoin ledger which stores Bitcoin transaction data, the Sovrin network is purpose-designed for identity management while storing no personal data in its ledger. Individuals and organizations can use the Sovrin network to create verifiable digital credentials that allow them to prove who they are and validate certain facts about themselves while still retaining full control of that information.&nbsp;</p>
+
+
+
+<p>The reliability of the Sovrin network comes from the fact that Sovrin is a ‘public permissioned’ ledger. This means that anyone can read from the ledger, but only trusted entities can replicate and write to it. These trusted entities are known as validator nodes (the equivalent of a miner in Bitcoin) and can only be administered by Sovrin Stewards. The Sovrin Stewards are a pool of trusted organizations, governments and businesses that volunteer resources and time towards hosting a validator node.&nbsp;</p>
+
+
+
+<p>You can see the components of the Sovrin network here:</p>
+
+
+
+<figure class="wp-block-image size-large"><img loading="lazy" width="680" height="534" src="https://anonyome.com/wp-content/uploads/2021/02/image.png" alt="" class="wp-image-2312" srcset="https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/02/image.png 680w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/02/image-300x236.png 300w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/02/image-51x40.png 51w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/02/image-406x319.png 406w" sizes="(max-width: 680px) 100vw, 680px" /></figure>
+
+
+
+<p><strong>Sovrin’s vision of enabling privacy-enhancing decentralized identity for all closely aligns with&nbsp;</strong><a href="https://anonyome.com/" target="_blank" rel="noreferrer noopener"><strong>Anonyome Labs’</strong></a><strong>&nbsp;vision of putting the user in control of their personal data, and we are proud to be contributing to the operation of the Sovrin network.&nbsp;</strong></p>
+
+
+
+<p>Since we launched our node in 2018, the&nbsp;<a href="https://sovrin.org/wp-content/uploads/Steward-Technical-and-Organizational-Policies-V2.pdf" target="_blank" rel="noreferrer noopener">technical requirements</a>&nbsp;for being a Sovrin Steward have changed as the network has grown and matured. This meant we had to upgrade the Anonyome validator node to conform to the latest technical and organisational requirements. Elements to upgrade included computing hardware, new security polices, and specified network settings. Also, Anonyome’s Steward Node administrators have changed and we needed to communicate this to Sovrin.&nbsp;</p>
+
+
+
+<h3><strong>What is required of a Sovrin Steward? </strong></h3>
+
+
+
+<p></p>
+
+
+
+<p>The&nbsp;<a href="https://sovrin.org/wp-content/uploads/Steward-Technical-and-Organizational-Policies-V2.pdf" target="_blank" rel="noreferrer noopener">technical and organisational policies</a>&nbsp;that Sovrin Stewards must conform to are instrumental to the durability and security of the Sovrin network as a whole. The Sovrin Governance Board agrees on these requirements and they are publicly documented in the&nbsp;<a href="https://sovrin.org/library/sovrin-governance-framework/" target="_blank" rel="noreferrer noopener">Sovrin Governance Framework</a>.</p>
+
+
+
+<p>The specific policies to which a Steward must conform depends on the specific Sovrin network in which their validator node is running. Sovrin currently runs&nbsp;<a href="https://sovrin.org/overview/" target="_blank" rel="noreferrer noopener">three networks</a>: MainNet, StagingNet (sandbox network) and BuilderNet (test network). A validator node running on the MainNet must meet the specific requirements set out in the policy documents, while for other nodes on the other networks, this is only highly recommended.</p>
+
+
+
+<p>At the time of writing, the Anonyome node runs on StagingNet, but to future-proof our node and to participate in MainNet operations, we wanted to bring our node to full compliance.</p>
+
+
+
+<p>The changes meant upgrading our node’s server hardware specifications, reviewing our security polices and reconfiguring our network configuration. We also advised Sovrin of our new Sovrin Steward administrators.&nbsp;</p>
+
+
+
+<h3><strong>We took a careful step-by-step approach to upgrading the node</strong></h3>
+
+
+
+<p></p>
+
+
+
+<p>Given the importance of each individual node to the performance of the overall Sovrin network, we took a very meticulous approach to upgrading our validator node.&nbsp;</p>
+
+
+
+<p>Our node is hosted on Amazon Web Services (AWS) and uses their&nbsp;<a href="https://aws.amazon.com/ec2/" target="_blank" rel="noreferrer noopener">Elastic Cloud Compute</a>&nbsp;(EC2) and&nbsp;<a href="https://docs.aws.amazon.com/vpc/index.html" target="_blank" rel="noreferrer noopener">Virtual Private Cloud</a>&nbsp;(VPC) offerings. Hosting our node on AWS allows for streamlined scalability, automated backup options and peace of mind that our node is running on a robust, secure server. We chose to run our node in the AWS Sydney data centre to bring greater geographic diversity to the Sovrin network and, as such, we were the&nbsp;<a href="https://www.globenewswire.com/news-release/2018/12/13/1666366/0/en/Sovrin-Network-Continues-Strong-Momentum-with-Four-New-Founding-Stewards.html" target="_blank" rel="noreferrer noopener">first Steward to host a node in Australia</a>.&nbsp;</p>
+
+
+
+<p>The first upgrade step we took was to compare the current node’s baseline attributes with Sovrin’s Steward Node requirements.<strong>&nbsp;</strong>This involved investigating the hardware specifications of our EC2 instance type, understanding the network configuration of our node and verifying all our security policies.&nbsp;</p>
+
+
+
+<p>From our findings, we identified two main areas to act on. First, we wanted to test our recovery process, to ensure that if an outage were to occur, we had a clear, practised approach for recovering our node. Second, we wanted to bring our node into full compliance by upgrading the hardware and reconfiguring the network settings.&nbsp;</p>
+
+
+
+<p>Due to the high-availability requirements of the node, it was important to minimize the amount of downtime we had during the upgrade process. To ensure that we knew exactly what to do when upgrading the node, we built a second ‘test’ validator node that was not connected to the Sovrin network. Using this ‘test’ node we did a practice run-through of the recovery and upgrade process, documenting the steps we took. Once we had a good grasp of the steps required to upgrade our node, we&nbsp;<a href="mailto:support@sovrin.org" target="_blank" rel="noreferrer noopener">notified Sovrin</a>&nbsp;of our plans to take down the node and the anticipated outage times.&nbsp;</p>
+
+
+
+<h3><strong><em>Recovering our validator node</em></strong></h3>
+
+
+
+<p></p>
+
+
+
+<p>We first tested out our node recovery process to ensure we could recover our node if an unexpected outage occurred and to provide some peace of mind before attempting to upgrade our node.&nbsp;</p>
+
+
+
+<p>Recovery involved setting up regular&nbsp;<a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html" target="_blank" rel="noreferrer noopener">Amazon Machine Image</a>&nbsp;(AMI) snapshots to back up the image and hard disks of our validator node. We then created a&nbsp;<a href="https://docs.aws.amazon.com/autoscaling/ec2/userguide/LaunchTemplates.html" target="_blank" rel="noreferrer noopener">launch template</a>, which allows us to pre-configure launch settings such as the Instance Type, AMI, security and networking.&nbsp;</p>
+
+
+
+<p>To test the recovery process, we terminated (shut down and deleted) our validator node EC2 instance. We then launched a new EC2 instance using the AMI snapshot and launch template. During this process we used the Indicio&nbsp;<a href="https://indymonitor.indiciotech.io/d/_MrNDySMk/sovrin-stagingnet?orgId=2&amp;refresh=10s" target="_blank" rel="noreferrer noopener">Sovrin Network Health Dashboard</a>&nbsp;to monitor the status of the node. From this process we learned that we were able to successfully recover our node in under 15 minutes.&nbsp;</p>
+
+
+
+<p>Now that we were confident that we could recover our node if something went wrong, we attempted to upgrade our node. We decided to upgrade our node by building a new launch template that used the AMI snapshot backup with updated configuration settings.</p>
+
+
+
+<h3><strong><em>Upgrading our validator node</em></strong></h3>
+
+
+
+<p></p>
+
+
+
+<figure class="wp-block-image size-large"><img loading="lazy" width="788" height="588" src="https://anonyome.com/wp-content/uploads/2021/02/image-1.png" alt="" class="wp-image-2313" srcset="https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/02/image-1.png 788w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/02/image-1-300x224.png 300w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/02/image-1-768x573.png 768w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/02/image-1-54x40.png 54w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2021/02/image-1-428x319.png 428w" sizes="(max-width: 788px) 100vw, 788px" /><figcaption>Figure&nbsp;2: Overview of the upgraded Anonyome validator node environment</figcaption></figure>
+
+
+
+<p>Using AWS EC2 services, upgrading the hardware of our node was straightforward and was achieved by simply selecting a new instance type. For us, this meant upgrading from an r4.large to m5.2xlarge AWS instance type, which offers more CPU cores and RAM.&nbsp;</p>
+
+
+
+<p>Upgrading our network configuration was more involved. We first created a new&nbsp;<a href="https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Subnets.html#vpc-subnet-basics" target="_blank" rel="noreferrer noopener">subnet</a>&nbsp;(subset of VPC) dedicated for validator-to-validator communications. We then edited our launch template to configure two&nbsp;<a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-eni.html" target="_blank" rel="noreferrer noopener">network interface cards</a>&nbsp;for our validator node, each in a different subnet. This allowed&nbsp;<a href="https://docs.google.com/document/d/18MNB7nEKerlcyZKof5AvGMy0GP9T82c4SWaxZkPzya4/edit#heading=h.nwfzqbrl6fhq" target="_blank" rel="noreferrer noopener">inter-validator traffic to be separate</a>&nbsp;from any other network traffic going in or out of the node.&nbsp;</p>
+
+
+
+<p>When we first attempted to launch our upgraded node, we found that the network settings from the previous node instance were carried across to our upgraded node through the AMI backup. This meant that our virtual network interfaces could not be configured and as a result, we lost remote SSH access to the node.&nbsp;</p>
+
+
+
+<p>We overcame this issue by adjusting our launch template to use one of the original virtual network cards and then created a second virtual network card which had the desired network settings in the correct subnet. Once we launched the instance, we were able to remotely access the node and reconfigure the network configuration to accommodate for the new network interface card.&nbsp;</p>
+
+
+
+<p>Using AWS’s&nbsp;<a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html" target="_blank" rel="noreferrer noopener">Elastic IP address</a>&nbsp;service, which allocates public IP addresses to your AWS account, we dedicated an IP address each for validator communications and client communications when the node was first launched. Since these IP addresses are registered on the Sovrin network (<a href="https://indyscan.io/tx/SOVRIN_STAGINGNET/pool/92" target="_blank" rel="noreferrer noopener">see our Pool ledger transaction</a>), we reallocated them to the network interfaces on our upgraded validator node to ensure that no external network changes were made.&nbsp;</p>
+
+
+
+<h3><strong>We’re ready for the future</strong></h3>
+
+
+
+<p></p>
+
+
+
+<p>Upgrading our Sovrin validator node was a great way to review our existing node and refamiliarize ourselves with the intricacies and technologies of hosting a node.&nbsp;</p>
+
+
+
+<p>We are now confident that we have a reliable recovery plan in case our Sovrin validator node goes down and we are ready for any new upgrades required by the Sovrin network, especially with the desire to change from Ubuntu 16 to a later version on the horizon.&nbsp;</p>
+
+
+
+<p>We are proud to be hosting a conformant Sovrin validator node and look forward to continually supporting the Sovrin Foundation and being a part of the Sovrin network.&nbsp;</p>
+<p>The post <a rel="nofollow" href="https://anonyome.com/2021/02/our-recent-upgrade-to-our-sovrin-network-validator-node-in-australia-supports-the-decentralized-identity-community/">Our Recent Upgrade to Our Sovrin Network Validator Node in Australia Supports the Decentralized Identity Community</a> appeared first on <a rel="nofollow" href="https://anonyome.com">Anonyome Labs</a>.</p>
+]]></content:encoded>
+					
+		
+		
+			</item>
+		<item>
+		<title>4 Key Lessons I Learned as an Intern Software Engineer at Anonyome Labs</title>
+		<link>https://anonyome.com/2020/02/4-key-lessons-i-learned-as-an-intern-software-engineer-at-anonyome-labs/</link>
+		
+		<dc:creator><![CDATA[Anonyome Labs]]></dc:creator>
+		<pubDate>Wed, 19 Feb 2020 20:34:25 +0000</pubDate>
+				<category><![CDATA[Technology & Innovation]]></category>
+		<category><![CDATA[Company Culture]]></category>
+		<category><![CDATA[Internships]]></category>
+		<category><![CDATA[Startup]]></category>
+		<guid isPermaLink="false">https://anonyome.com/?p=1946</guid>
+
+					<description><![CDATA[<p>It has been a very impactful last few months at Anonyome Labs &#8211; I&#8217;ve learned a lot. I want to share some of&#160;&#160;key observations from my experience that I think can help people starting a new career. 1. No one is expecting you to be perfect right away This is an extremely important point. The [&#8230;]</p>
+<p>The post <a rel="nofollow" href="https://anonyome.com/2020/02/4-key-lessons-i-learned-as-an-intern-software-engineer-at-anonyome-labs/">4 Key Lessons I Learned as an Intern Software Engineer at Anonyome Labs</a> appeared first on <a rel="nofollow" href="https://anonyome.com">Anonyome Labs</a>.</p>
+]]></description>
+										<content:encoded><![CDATA[
+<p>It has been a very impactful last few months at Anonyome Labs &#8211; I&#8217;ve learned a lot. I want to share some of&nbsp;&nbsp;key observations from my experience that I think can help people starting a new career.</p>
+
+
+
+<hr class="wp-block-separator"/>
+
+
+
+<h3>1. No one is expecting you to be perfect right away</h3>
+
+
+
+<p>This is an extremely important point. The first few weeks is where you typically face the most errors. Don’t be too critical on yourself. You’re just getting familiar with the environment and the people around you &#8211; no one is expecting you to be perfect in your first week. The people around you are here to help and want to help you learn, so don’t be afraid to ask for help. Progress also isn’t linear, so don’t be discouraged that your results aren’t improving day-by-day. Just keep working hard and the results will come.</p>
+
+
+
+<h3>2. Understand the problem, then ask for help</h3>
+
+
+
+<p>You’re going to need to ask for help at some point. Before you do, take the time to figure out what you need help with. Become an expert of your problem before asking for help. It not only enhances your learning, but also teaches you the process of solving problems. Additionally, understanding the problem will help your team get to a solution quicker.</p>
+
+
+
+<h3>3. Learning how to learn is more important than hard skills</h3>
+
+
+
+<p>Knowing a system or language is only helpful for that system or language. When you optimize and practice how to learn you develop a life long skill. I found that this can also be applied outside of your career, as you can literally teach yourself anything with the same underlying learning techniques. You don’t want to corner your skills into one area; wear multiple hats.</p>
+
+
+
+<h3>4. Stepping away from the computer from time-to-time can help solve your problems</h3>
+
+
+
+<p>I found this extremely effective when I was spending too much time on a hard task. Stepping away from the desk and starting a conversation with a colleague cleared my mind and influenced my perspective on my problem. It also gave me an opportunity to get to know my colleagues around me and form stronger relationships with them. I noticed this one day when I was stuck on a particular task that consumed my whole morning and part of my afternoon. As I was explaining to my colleague what my project was it all clicked mid-sentence and I ran back to my desk and solved it.</p>
+
+
+
+<p>I want to thank Anonyome Labs for giving me the opportunity to learn and grow in such an amazing work environment. They have truly made me excited to come into work every day!</p>
+<p>The post <a rel="nofollow" href="https://anonyome.com/2020/02/4-key-lessons-i-learned-as-an-intern-software-engineer-at-anonyome-labs/">4 Key Lessons I Learned as an Intern Software Engineer at Anonyome Labs</a> appeared first on <a rel="nofollow" href="https://anonyome.com">Anonyome Labs</a>.</p>
+]]></content:encoded>
+					
+		
+		
+			</item>
+		<item>
+		<title>Quality Takes Time</title>
+		<link>https://anonyome.com/2020/01/quality-takes-time/</link>
+		
+		<dc:creator><![CDATA[Anonyome Labs]]></dc:creator>
+		<pubDate>Wed, 15 Jan 2020 16:44:34 +0000</pubDate>
+				<category><![CDATA[Technology & Innovation]]></category>
+		<guid isPermaLink="false">https://anonyome.com/?p=1901</guid>
+
+					<description><![CDATA[<p>When I started swimming competitively, my coach would have been the first to tell you that he thought I was going to drown. He thought that I was never going to go very far, my technique was horrible, I could barely make it across the pool before I got winded, and I was far from [&#8230;]</p>
+<p>The post <a rel="nofollow" href="https://anonyome.com/2020/01/quality-takes-time/">Quality Takes Time</a> appeared first on <a rel="nofollow" href="https://anonyome.com">Anonyome Labs</a>.</p>
+]]></description>
+										<content:encoded><![CDATA[
+<p>When I started swimming competitively, my coach would have been the first to tell you that he thought I was going to drown. He thought that I was never going to go very far, my technique was horrible, I could barely make it across the pool before I got winded, and I was far from being an “athlete”. Fast forward a few years to an awards ceremony in which I was named Athlete of the Year, and my coach recalled that story to the school district. He talked about how I put in the time it took in the pool, in the weight room, and on the track to become one of the fastest swimmers in the country, and the fastest in my event in the state. It took time to develop my skills, and eventually my technique, my strength, and my experience began to make me a well-honed athlete. Much like my skill as a swimmer evolving over time, the quality of software is shaped through hard work and dedication, both of which will often take time as well.</p>
+
+
+
+<p>There are several facets of any app that will affect the quality, ranging from where an app is in the development lifecycle to the complexity of the app. Quality starts at the beginning, but it may not be fully realized for some time. It takes everyone involved in the process to ensure that the foundation is laid to provide a quality app. In the beginning, the quality of an application will never be superb, there is almost always an issue with the way something works or looks. Some of this can be mitigated by focusing on our strengths and knowing our weaknesses.<br><br>People might develop an app for a hobby or a school project. Often this app isn’t well-defined or doesn’t have a finite end to it. It could simply be a proof of concept, or just something someone made while playing around with code. These apps might have a specific use case, but they don’t necessarily need the polish that a more robust app would need. They may lack the quality and luster that more complex apps made by a company have, but they were likely made very simply and potentially very quickly to demonstrate proficiency in the code. As people gain more experience, they begin to work on more complex apps or begin to give that simple app more polish. These are the foundations of creating a quality product.</p>
+
+
+
+<p>When I joined an electronic charting company for small doctors’ offices, I never expected that I would follow this path. I was just looking to expand my technical support role in a more defined way. I wanted to be able to focus on fixing issues that people were having. I started my journey in the world of software development after being offered a role as the sole QA Engineer on a new software update. I was starting at the beginning. I had little experience and little direction. Most importantly, I was capable of error. With little guidance, I was very much a hobbyist in a professional setting. I was guilty several times of not correctly testing, or even not testing the feature that I was working on very well. As I gained insight from the developers, project managers, and Google, I began to provide higher-quality testing. As I became a better and more confident tester, I began to see why our app was very buggy. It was only after some time that I was able to see that the lack of quality came from a lack of experience. Everyone was as new to the game as I was. We had not had enough time personally to develop our skills as project managers, developers, and QA and our lack of time was apparent in the quality of our latest flagship software. Quality is not just about taking the time to build out software correctly, but taking the time to learn, and learn from our mistakes.</p>
+
+
+
+<p>As time moved on, I realized that I had reached the peak of my ability to learn and grow there, so I moved on to new challenges and experiences. I found myself in a new space, working to develop software for improving customer experiences. I started working with a team of people that had time in, that had the experience necessary to make a quality app. It was great to have mentors that not only wanted to teach me new skills but would take the time to do so. I was part of a team where another QA Engineer and I were responsible for sharing the workload. The software we were working on was established, and while we were developing new tools and reporting for our program, I had time to learn while doing so. We had project managers that defined use cases very well, and we had developers who had been working on developing similar technology for years over many projects and many iterations. The QA team had good leadership with a manager who took the time to teach and got in the trenches when he was needed. He molded my perceptions and attitude. He stood for quality over quantity. He showed me that it was okay to take the time needed to test, and to be confident that we were shipping a sound product. It was the start of my philosophy that good quality takes time.</p>
+
+
+
+<p>As my company continued to grow, some very large changes were made. First and foremost, the product I was working on began to overtake traditional forms of reporting for our customers. It quickly ballooned as it offered the best insights and the best strategy to improve overall experience, not only for our customers, but for their customers as well. At the same time this was happening, several members of the team, including my manager, decided to move on. It seemed like overnight that we went from 5 QA and a QA Manager to 3 QA, with no real leadership. We didn’t have the time anymore to truly hammer and test the app. We still had great direction from our project managers and developers, and they could respond quickly to any defects we found, but we found ourselves having to triage and manage risk to complete testing by the deadlines. Quality began to slip. We went from having the rare hotfix to having 1-2 patches per deployment. We just couldn’t provide the quality in the time given. The cycle was only getting worse, because every patch cost us that much more time. The only solution that was obvious to me at the time was to hire more people. It fell in line with good quality takes time: if we had more people, we would have more time.</p>
+
+
+
+<p>I pushed for more people and some involvement in the hiring process. I knew in my mind that enough good people would help, and the investment in time to get them would be worth it in the end. Shortly, we had more people on the team, and due to my involvement in hiring, and pushing for better quality, I was asked to be the team lead. Soon we were back to 5 QA and a leader. We had the people and our quality was getting back into shape. I knew that as we grew, our team would need to grow, not only in size but in experience. Again, I would invest time in the short term to get quality in the long term. I took the best tenets from my previous leaders and experience to instill testing quality in my team. We had weekly trainings ranging from how to use our product to testing best practices. QA was growing and quality was winning, until we had an opportunity to be included in the Forrester Wave, a prominent ranking of businesses that other businesses could acquire tools and services from. This was a chance to put our software on the map with large companies around the world. It also meant tight timelines: we had to have our new insight engine out to our customers and working well in a fraction of the time. We had enough people to tackle the job, but we didn’t have the time. Our developers were working diligently to write new code and finish features. We had it planned out so that we were leveraging our developers in a way that wouldn’t cause them to step on each other’s toes, but they also tried to complete the work as quickly as possible. What happened was a problem where testing and regression testing were not accounted for, causing our developers to be on overdrive. They were moving so quickly trying to write new code that we began to find more bugs than we could handle in such a short time. So once again, we were forced to triage the greatest bugs against the new and needed functionality. Ultimately, we were forced to cut some functionality to ensure that we delivered as promised and were able to maintain some semblance of quality.</p>
+
+
+
+<p>Although we got a win and were well-rated in the Forrester Wave, we set a dangerous precedent. We sparked the idea that under pressure, anything is possible. This concept can be valid in the short term, but over time, you begin to sacrifice productivity for tired developers and QA. When you go down this road, it is only a matter of time before quality becomes wholly unattainable. We kept pushing at this pace for quite some time, and during this time we started to lose people, good people. When you push people past their limits and they see their work begin to decline, those people will ultimately leave. When you lose out on good people it is only a matter of time before quality is an afterthought. When priorities began to shift, I began to look elsewhere and landed at Anonyome Labs, and it was a breath of fresh air. I was given the opportunity to step back and jump back into testing fully. I was part of a team that was engaged in quality at all levels. We had top-notch developers and some of the smartest QA I have worked with. In team planning we ensured that we included QA in all facets. QA approved branch merges and were the ones who ultimately influenced whether a build was approved for release. Our team lead and our head of QA were fully committed to ensuring that we took the time to have quality builds. This was put to the test soon after I was hired. We were on a crunch to build a new app and release it to the app store. We had customers waiting, and we needed to get out to the public as quickly as possible. This started to sound familiar, but the difference this time was that QA was planned as part of the effort. We took the time to ensure that we aligned our release with our target quality expectations. Anonyome took the time to hire experienced product managers, QA, and developers. They took the time to plan out releases with quality in mind from the beginning. It was not just an afterthought.</p>
+
+
+
+<p>Soon I was given the opportunity to lead a team of QA that was working to build our app on Android. We were working rapidly to catch up to our iOS team. My small team of QA was being pushed to the limit. I began to work with my managers to build our team. We looked into hiring another team member, but other teams needed the focus and the emphasis. I was told that it wasn’t in the cards to hire more QA for my team. I was used to the idea that quality took time, and time was managed by more people and not less. I was at an impasse. If we were working to ensure quality first, and I didn’t have the people that I needed, how was I supposed to manage time without sacrificing quality? Luckily, I have two seasoned managers that were able to enhance my thinking. They were able to open my eyes to the obvious concept, that if we estimated the time it would take to complete our work correctly, we would have enough time to complete the work. We needed to understand better the work that we were doing and start to predict some of the pitfalls that we might face. We could also push back on a timeline that was too short to fulfill what we were estimating to be done. I didn’t need to be a yes man and bow to the pressure. I needed to be honest, quality takes time. If we wanted to produce the high quality that we were known for, we had to take the time.</p>
+
+
+
+<p>Throughout the years, I have learned a lot of lessons and learned a lot about QA. The most important to me has been about time management and delivering the most quality product that I can. Quality takes time, but this can be managed in several ways. We cannot always count on having highly experienced professionals on the team. What we can do is make sure that not only do we have enough people to handle the tasks ahead, but that we have properly scoped out the time it will take to handle the workload we are given.</p>
+
+
+
+<p></p>
+
+
+
+<p>Photo credit: https://unsplash.com/@serenarepice</p>
+<p>The post <a rel="nofollow" href="https://anonyome.com/2020/01/quality-takes-time/">Quality Takes Time</a> appeared first on <a rel="nofollow" href="https://anonyome.com">Anonyome Labs</a>.</p>
+]]></content:encoded>
+					
+		
+		
+			</item>
+		<item>
+		<title>Open End-to-End Encrypted Messaging</title>
+		<link>https://anonyome.com/2019/11/open-end-to-end-encrypted-messaging/</link>
+		
+		<dc:creator><![CDATA[Anonyome Labs]]></dc:creator>
+		<pubDate>Fri, 08 Nov 2019 19:44:29 +0000</pubDate>
+				<category><![CDATA[Technology & Innovation]]></category>
+		<guid isPermaLink="false">https://anonyome.com/?p=1841</guid>
+
+					<description><![CDATA[<p>Messaging Leapfrogged Email Email drew everyday users to the internet, because it was simple and fast&#160;… ask a question and get a quick answer.&#160;&#160;While email remains popular (281 billion emails sent in 2018 growing by 5% per year[1]), messaging is winning … for the same reason.&#160;&#160;Domo reported[2]&#160;that mobile users send 15,220,700 text messages&#160;every minute, which [&#8230;]</p>
+<p>The post <a rel="nofollow" href="https://anonyome.com/2019/11/open-end-to-end-encrypted-messaging/">Open End-to-End Encrypted Messaging</a> appeared first on <a rel="nofollow" href="https://anonyome.com">Anonyome Labs</a>.</p>
+]]></description>
+										<content:encoded><![CDATA[
+<p><strong>Messaging Leapfrogged Email</strong></p>
+
+
+
+<p>Email drew everyday users to the internet, because it was simple and fast&nbsp;<em>… ask a question and get a quick answer</em>.&nbsp;&nbsp;While email remains popular (281 billion emails sent in 2018 growing by 5% per year<sup>[1]</sup>), messaging is winning … for the same reason.&nbsp;&nbsp;Domo reported<sup>[2]</sup>&nbsp;that mobile users send 15,220,700 text messages&nbsp;<em>every minute</em>, which is nearly 8 trillion messages annually!&nbsp;&nbsp;Why did users switch?&nbsp;&nbsp;Email often feels too formal (e.g.,&nbsp;<em>to, from, subject, body,&nbsp;</em>etc.) while messages are short to send and quick to read.&nbsp;&nbsp;This trend is also attracting businesses who connect with customers through messages to send appointment reminders, fill prescriptions, send fraud alerts, etc.<br></p>
+
+
+
+<h3><strong>Are SMS Messages Secure?</strong></h3>
+
+
+
+<p>Nope.&nbsp;&nbsp;When SMS messaging (<em>text messaging</em>) was invented, the transmission method&nbsp;<em>piggybacked&nbsp;</em>on GSM signaling channels when they were not in use.&nbsp;&nbsp;By integrating with the signaling channels, the new SMS messages had to appear like signaling messages.&nbsp;&nbsp;This was perfect, because it leveraged existing infrastructure (i.e., it kept costs lower), however, it didn’t include user-level message encryption.&nbsp;&nbsp;</p>
+
+
+
+<h3><strong>Securing Messages … With End-to-End Encryption</strong></h3>
+
+
+
+<p>Thanks to the myriad of data breaches plaguing society<sup>[3]</sup>, today’s users are painfully aware of the need to protect their private data and are increasingly moving from insecure SMS communication to over-the-top secure messaging applications.&nbsp;&nbsp;Strong encryption keeps data secure, so that unauthorized parties can’t read it, while End-to-End Encryption (E2EE) ensures that only the intended receiver can read it.&nbsp;&nbsp;Coupling E2EE with detailed message authentication processes are vital in keeping the message exchange processes secure from other attack vectors, such as forgery attacks that let attackers maliciously misattribute message posts (e.g., WhatsApp<sup>[4]</sup>) and Media File Jacking that replaces message attachments with fake&nbsp;files before they are viewed (e.g., WhatsApp and Telegram<sup>[5]</sup>).&nbsp;&nbsp;Making E2EE work (and simple for users to use) requires strong encryption plus some behind the scenes encryption key management that is simplified by emerging Self-Sovereign Identity technologies.&nbsp;&nbsp;</p>
+
+
+
+<h3><strong>Situational Personas:&nbsp;&nbsp;the Sudo</strong></h3>
+
+
+
+<p>Internet users connect to online websites and services while performing a wide variety of activities that include:&nbsp;&nbsp;work tasks, family activities, social group interactions, traveling, personal medical research, volunteering, etc.&nbsp;&nbsp;Personal contact points (e.g., email address, phone number, credit card number, etc.) have become the de facto identifiers that websites use to track and correlate user activity across numerous websites with the intent of delivering targeted advertising.&nbsp;&nbsp;However, these correlations are not always limited to advertising and this presents numerous privacy risks for unsuspecting users.&nbsp;&nbsp;While many services work to block ads and tracking objects, Anonyome Labs extends those methods by encapsulating a full set of personal contact points into a new type of identity called a&nbsp;<em>Sudo</em>.&nbsp;&nbsp;Anonyome users can create a separate Sudo to use with each of their various digital activities.&nbsp;&nbsp;Using Sudos helps users segment their&nbsp;<em>digital exhaust</em>, which helps block tracking entities from collecting, buying, and selling a user’s identity and personal data.&nbsp;</p>
+
+
+
+<h3><strong>What is Self-Sovereign Identity?</strong></h3>
+
+
+
+<p>As the internet and web were created, great emphasis was placed on networking technologies (e.g., TCP/IP, http) and other concerns such as user identity was not a big consideration.&nbsp;&nbsp;The concept of Self-Sovereign Identity (SSI) has emerged to help users identify themselves to remote sites and services, securely exchange information, and digitally prove facts about themselves that are currently difficult to verify.&nbsp;&nbsp;In a nutshell, today’s users need to create a new identity (e.g., login name and password) with every online service where they interact, and SSI will make that more secure and simpler for users.&nbsp;&nbsp;For an in-depth overview of SSI, the Sovrin Foundation has created an excellent whitepaper<sup>[6]</sup>.&nbsp;</p>
+
+
+
+<h3><strong>SSI Building Blocks</strong></h3>
+
+
+
+<p>SMS Messaging has enabled subscribers of one SMS Provider (e.g., telco) to communicate with subscribers of another SMS Provider and this cross-service communication has been a boon for SMS messaging overall.&nbsp;&nbsp;As new over-the-top application providers (e.g., iMessage, WhatsApp, Telegram, Signal, etc.) migrated towards encrypted messaging services, they ended up creating&nbsp;<em>walled gardens</em>&nbsp;that require message senders and recipients to both use the same messaging app and provider.&nbsp;&nbsp;While this provider-centric communication method simplifies encryption key management, it also limits message recipients to those already belonging to the same messaging service.&nbsp;&nbsp;</p>
+
+
+
+<p>The Anonyome Labs Sudo Platform<sup>[7]</sup>&nbsp;is a set of SDK/APIs and associated services that allows application developers to easily add privacy features to their applications. Sudo Platform’s upcoming Advanced Messaging system overcomes this provider-centric encrypted messaging limitation by using several core SSI elements to send end-to-end encrypted messages to receivers on separate, but compatible messaging systems.&nbsp;&nbsp;Sudo Platform provides a set of interoperable APIs that can be used by a variety of vendors to connect their messaging apps with apps that have integrated with the Sudo Platform.&nbsp;&nbsp;Providing E2EE interoperability enables users to communicate with their friends and associates even if they use a different, but compatible, messaging app.&nbsp;&nbsp;</p>
+
+
+
+<p>One of the core SSI maxims is that control of user identities (including encryption keys) resides with the individual users and not with a specific provider.&nbsp;&nbsp;New SSI user experience paradigms make exchanging identity information very simple for users.&nbsp;&nbsp;In one scenario, a user can display a QR code for another user to scan with their phone’s camera.&nbsp;&nbsp;In another scenario, a user can send their SSI information to another user who can verify it on the blockchain.&nbsp;&nbsp;Both of these methods provide very simple user experiences that invoke several strong cryptographic processes that the user doesn’t have to understand or mess with.</p>
+
+
+
+<p></p>
+
+
+
+<figure class="wp-block-image"><img loading="lazy" width="1024" height="576" src="https://anonyome.com/wp-content/uploads/2019/11/Slide0-1024x576.png" alt="" class="wp-image-1859" srcset="https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/Slide0-1024x576.png 1024w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/Slide0-300x169.png 300w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/Slide0-768x432.png 768w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/Slide0-1536x864.png 1536w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/Slide0-2048x1152.png 2048w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/Slide0-71x40.png 71w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/Slide0-567x319.png 567w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/Slide0-587x330.png 587w" sizes="(max-width: 1024px) 100vw, 1024px" /><figcaption>Figure 1 – DIDs and URLs</figcaption></figure>
+
+
+
+<p></p>
+
+
+
+<p>On the web, the main identifier is a URL, which is used to navigate to webpages.&nbsp;&nbsp;With SSI, the main identifier is known as a Decentralized Identifier or DID<sup>[8]</sup>.&nbsp;&nbsp;DIDs are conceptually similar to URLs in that while URLs point to webpages, DIDs reference cryptographically verifiable identifiers on a decentralized ledger or blockchain.&nbsp;&nbsp;Figure 1 shows the similarity between DIDs and URLs:</p>
+
+
+
+<p>What makes DIDs useful is that they are self-certifying identifiers (users can verify that the link is real) and they can return a companion DID Document (also called a DID Doc) that contains additional information, such as:&nbsp;encryption keys, digital signatures, pointers to additional information, etc.&nbsp;&nbsp;When a decentralized ledger is used to store and retrieve DIDs, it keeps the authentication mechanisms&nbsp;<em>out of band</em>&nbsp;from the host messaging service and helps avoid compromises from Man-In-The-Middle (MiTM) attacks.&nbsp;&nbsp;</p>
+
+
+
+<p>DIDs written to a public ledger are called&nbsp;<em>Public DIDs</em>&nbsp;and are often used to help users identify each other.&nbsp;&nbsp;Once two users verify each other’s identity, they will often create a private or Pairwise DID.&nbsp;&nbsp;Pairwise DIDs are created between two users who keep them private and never write them to an external location or blockchain.&nbsp;&nbsp;While Public DIDs help users connect, Pairwise DIDs enable users to create a private encrypted communication pathway.&nbsp;&nbsp;This may seem like an unnecessary extra step; however, it has valuable security benefits.&nbsp;&nbsp;Using different Pairwise DIDs with each communication partner ensures that if the encryption (i.e., Pairwise DID, encryption keys) between one set of users is ever compromised, that the Pairwise DIDs created with other communication partners remain secure.&nbsp;&nbsp;This is a key benefit over standard public key encryption wherein if a public/private keypair is compromised, it affects all or most of a user’s communication partners.</p>
+
+
+
+<p></p>
+
+
+
+<figure class="wp-block-image"><img loading="lazy" width="1024" height="373" src="https://anonyome.com/wp-content/uploads/2019/11/image-6-1024x373.png" alt="" class="wp-image-1851" srcset="https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-6-1024x373.png 1024w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-6-300x109.png 300w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-6-768x280.png 768w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-6-1536x559.png 1536w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-6-110x40.png 110w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-6-570x208.png 570w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-6-855x311.png 855w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-6.png 1708w" sizes="(max-width: 1024px) 100vw, 1024px" /><figcaption>Figure 2 – Provisioning Decentralized Identifiers</figcaption></figure>
+
+
+
+<h3></h3>
+
+
+
+<h3><strong>Encrypted Messaging:&nbsp;&nbsp;Putting It All Together</strong></h3>
+
+
+
+<p>When users install the Sudo Platform-enabled encrypted messaging app and create a Sudo identity, it performs an SSI initialization process.&nbsp;&nbsp;During the initialization, the app creates a secure SSI storage wallet specific to an individual Sudo identity.&nbsp;&nbsp;The wallet is used to securely store Public DIDs (including the private keys) and exchanged Pairwise DIDs.&nbsp;&nbsp;While not discussed here, the wallet may also contain other SSI elements, such as Verifiable Credentials, Verifiable Claims, and other secure tokens.&nbsp;&nbsp;After the wallet is created, the Sudo optionally creates an initial Public DID, and registers it with the Sudo Platform Server, which writes it to the Sovrin decentralized ledger.&nbsp;&nbsp;The results of writing the Public DID to the ledger are returned to the requesting Sudo and stored in the wallet.&nbsp;&nbsp;This process is shown in Figure 2:</p>
+
+
+
+<p>As mentioned above, writing a DID to the ledger is optional.&nbsp;&nbsp;Whether or not a user chooses to make a DID publicly verifiable by writing it to the ledger depends on why they are creating a DID.&nbsp;&nbsp;For example, if a user wishes to create a Sudo (and the corresponding DID) in order to interact with public organizations (e.g., government, university, etc.) or financial entities (e.g., banks, crypto currency exchanges, etc.), then creating a public DID on the ledger will likely be mandatory for interacting with those types of entities.&nbsp;&nbsp;However, if a user creates a Sudo mainly for private communications, interacting in online chat forums, or using social media, then the user may not necessarily need or want their DID to be public and a non-public DID (i.e., not written to the ledger) may be a more appropriate choice.&nbsp;&nbsp;Anonyome Labs enables the user to choose the type of DID they wish to create and enables them to use it accordingly.</p>
+
+
+
+<p>In order to establish a private end-to-end encrypted messaging channel, two users need to negotiate a Pairwise DID.&nbsp;&nbsp;The Sudo Platform server provides the messaging transport service that relays encrypted messages between the two Sudo users.&nbsp;&nbsp;At the user level, Sudo Platform provides functionality to enable two Sudo users to perform the Pairwise DID negotiation process (e.g., using the Hyperledger Aries DID Exchange Protocol<sup>[9]</sup>), as shown in Figure 3:</p>
+
+
+
+<figure class="wp-block-image"><img loading="lazy" width="1024" height="615" src="https://anonyome.com/wp-content/uploads/2019/11/Screenshot-2019-11-11-11.07.00-1024x615.png" alt="" class="wp-image-1866" srcset="https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/Screenshot-2019-11-11-11.07.00-1024x615.png 1024w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/Screenshot-2019-11-11-11.07.00-300x180.png 300w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/Screenshot-2019-11-11-11.07.00-768x461.png 768w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/Screenshot-2019-11-11-11.07.00-1500x900.png 1500w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/Screenshot-2019-11-11-11.07.00-67x40.png 67w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/Screenshot-2019-11-11-11.07.00-531x319.png 531w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/Screenshot-2019-11-11-11.07.00-550x330.png 550w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/Screenshot-2019-11-11-11.07.00.png 1516w" sizes="(max-width: 1024px) 100vw, 1024px" /><figcaption>Figure 3 – Pairwise DID Negotiation Process Steps</figcaption></figure>
+
+
+
+<p>The preceding Pairwise DID negotiation steps are also depicted below in Figure 4.&nbsp;&nbsp;In this scenario, one user displays a QR Code, which is scanned by the other user.&nbsp;&nbsp;This step, usually performed in person, asserts one user’s identity.&nbsp;&nbsp;After that, both users begin the Pairwise DID negotiation process described above and exchange those messages using the Sudo Platform server to relay the messages.&nbsp;&nbsp;Once this process is complete and both users have the Pairwise DID, they can use it to send E2EE messages, which contains encryption keys that are unknown to any external party.&nbsp;</p>
+
+
+
+<p></p>
+
+
+
+<figure class="wp-block-image"><img loading="lazy" width="1024" height="907" src="https://anonyome.com/wp-content/uploads/2019/11/image-7-1024x907.png" alt="" class="wp-image-1852" srcset="https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-7-1024x907.png 1024w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-7-300x266.png 300w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-7-768x680.png 768w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-7-45x40.png 45w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-7-306x270.png 306w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-7-360x319.png 360w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-7-373x330.png 373w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-7.png 1030w" sizes="(max-width: 1024px) 100vw, 1024px" /><figcaption>Figure 4 – Creating and Sharing Pairwise DIDs Using QR Codes</figcaption></figure>
+
+
+
+<p></p>
+
+
+
+<p>Another method for remotely negotiating Pairwise DIDs leverages a decentralized ledger or blockchain for the initial user identification step.&nbsp;&nbsp;In this process, a user can send their DID to another user who confirms with the sender that it is their DID.&nbsp;&nbsp;The receiver can resolve the sender’s DID on the blockchain where it is hosted and retrieve the DID Doc.&nbsp;&nbsp;With the sender’s DID and DID Doc information, the receiver can perform the same Pairwise DID negotiation steps as outlined above in Figures 3 and 4.&nbsp;&nbsp;The remote Pairwise DID negotiation process is shown in Figure 5:</p>
+
+
+
+<p></p>
+
+
+
+<figure class="wp-block-image"><img loading="lazy" width="570" height="456" src="https://anonyome.com/wp-content/uploads/2019/11/image-11.png" alt="" class="wp-image-1863" srcset="https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-11.png 570w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-11-300x240.png 300w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-11-50x40.png 50w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-11-399x319.png 399w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-11-413x330.png 413w" sizes="(max-width: 570px) 100vw, 570px" /><figcaption>Figure 5 – Creating and Sharing Pairwise DIDs Using Ledger Resolution</figcaption></figure>
+
+
+
+<p></p>
+
+
+
+<p>A third method for exchanging DIDs exists with users that share the same message hosting provider (i.e., they reside in the same walled garden).&nbsp;&nbsp;The DID exchange steps are the same as shown in Figure 3, although the initial retrieval of the DID and DID Doc may be obtained locally from the message hosting provider.&nbsp;&nbsp;This greatly simplifies the DID exchange process by nearly eliminating all manual user steps, which are performed automatically by the messaging provider.&nbsp;&nbsp;When this method is used, an out-of-band key verification step is available to users wishing to verify the authenticity of the remote DID.&nbsp;&nbsp;One method, for example, is to have each party verbally convey a set of random values to the other party and ensures that the retrieved DIDs are the same DIDs used in the pairwise DID generation process.</p>
+
+
+
+<p>Once the sender and receiver have negotiated their unique Pairwise DIDs, then they can exchange E2E encrypted messages.&nbsp;&nbsp;In this process, Sudo A will use the Pairwise DID negotiated with Sudo B to encrypt the message and send it to Sudo B via the Sudo Platform’s Message Server.&nbsp;&nbsp;When Sudo B receives the encrypted message, it will retrieve the corresponding Pairwise DID, load their private key, and decrypt the message.&nbsp;&nbsp;Using this process, while the messaging transport layer (e.g., messaging hosting provider’s server) controls the transmission of the messages, it does not have access to the decrypted message, nor the key used to encrypt it.&nbsp;&nbsp;This process is shown in Figure 6:</p>
+
+
+
+<p></p>
+
+
+
+<figure class="wp-block-image"><img loading="lazy" width="1024" height="896" src="https://anonyome.com/wp-content/uploads/2019/11/image-9-1024x896.png" alt="" class="wp-image-1854" srcset="https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-9-1024x896.png 1024w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-9-300x263.png 300w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-9-768x672.png 768w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-9-46x40.png 46w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-9-364x319.png 364w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-9-377x330.png 377w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-9.png 1042w" sizes="(max-width: 1024px) 100vw, 1024px" /><figcaption>Figure 6 – In-Network Secure Messaging</figcaption></figure>
+
+
+
+<h3></h3>
+
+
+
+<p><strong>Sudo Platform:&nbsp;&nbsp;End-to-End Encrypted Messaging Between Walled Gardens</strong></p>
+
+
+
+<p>The current generation of over-the-top encrypted messaging apps is operated by many separate messaging providers who each offer E2EE messaging services to users operating within the protective environment of their respective walled gardens.&nbsp;&nbsp;Such apps include Apple’s iMessage, Facebook’s WhatsApp, and Whisper Systems’ Signal.&nbsp;&nbsp;Under this paradigm, users can send E2EE messages to recipients, but only if the recipients operate on the same E2EE system.&nbsp;&nbsp;</p>
+
+
+
+<p>While contemporary over-the-top E2EE systems have helped increase user privacy over traditional SMS messages, Sudo Platform is implementing new messaging standards that will enable E2EE message exchange between users of separate messaging providers.&nbsp;&nbsp;The message exchange components are based on the Hyperledger Aries messaging protocols.&nbsp;&nbsp;Messaging providers implementing Hyperledger’s open standards will enable their users to exchange DIDs<sup>[10]</sup>, encrypt messages<sup>[11]</sup>, and exchange messages<sup>[12]</sup>&nbsp;in a standard compatible format regardless of whether the senders and recipients are hosted within the same walled garden.&nbsp;&nbsp;A high-level view of this new process of exchanging messages between message hosting providers is shown in Figure 7:</p>
+
+
+
+<p></p>
+
+
+
+<p></p>
+
+
+
+<figure class="wp-block-image"><img loading="lazy" width="1024" height="570" src="https://anonyome.com/wp-content/uploads/2019/11/image-10-1024x570.png" alt="" class="wp-image-1855" srcset="https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-10-1024x570.png 1024w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-10-300x167.png 300w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-10-768x427.png 768w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-10-1536x855.png 1536w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-10-72x40.png 72w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-10-570x317.png 570w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-10-593x330.png 593w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/image-10.png 1862w" sizes="(max-width: 1024px) 100vw, 1024px" /><figcaption>Figure 7 – Out-of-Network Secure Messaging</figcaption></figure>
+
+
+
+<p></p>
+
+
+
+<p></p>
+
+
+
+<p>Exchanging messages between separate messaging providers is a process inherent in email and SMS messaging, however, it is notably absent in the current generation of over-the-top E2EE messaging providers.&nbsp;&nbsp;This is due, in part, to the lack of methods for discovering remote messaging servers, but also in large measure due to the logistical complexity involved in distributed key management.&nbsp;&nbsp;The Hyperledger Aries protocols, Sovrin ledger, and W3C DID specifications enable the Sudo Platform to provide an open E2EE messaging service and to facilitate interoperability with compatible messaging providers.&nbsp;&nbsp;</p>
+
+
+
+<p>Specific routing protocols use exchange messages between different messaging providers and is described in the Hyperledger Aries protocols as described above.&nbsp;&nbsp;However, they key identifiers that make this possible are contained within the DID Document, itself.&nbsp;&nbsp;Figure 8 shows the key DID Document elements that enable a sender to identify a receiver’s messaging endpoint:</p>
+
+
+
+<figure class="wp-block-image"><img loading="lazy" width="1024" height="495" src="https://anonyome.com/wp-content/uploads/2019/11/Screenshot-2019-11-07-15.44.41-1024x495.png" alt="" class="wp-image-1856" srcset="https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/Screenshot-2019-11-07-15.44.41-1024x495.png 1024w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/Screenshot-2019-11-07-15.44.41-300x145.png 300w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/Screenshot-2019-11-07-15.44.41-768x371.png 768w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/Screenshot-2019-11-07-15.44.41-83x40.png 83w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/Screenshot-2019-11-07-15.44.41-570x276.png 570w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/Screenshot-2019-11-07-15.44.41-682x330.png 682w, https://3mrfkn2zieuc3mxi6d26ag4d-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/Screenshot-2019-11-07-15.44.41.png 1348w" sizes="(max-width: 1024px) 100vw, 1024px" /><figcaption>&nbsp;Figure 8 – Minimal Self-Managed DID Document<a href="applewebdata://17268A9F-BDB9-43C1-9253-D8B270D2EE3B#_ftn1"><sup>[1]</sup></a><br></figcaption></figure>
+
+
+
+<h3></h3>
+
+
+
+<p><strong>Sudo Platform:&nbsp;&nbsp;Interoperable End-to-End Encrypted Messaging</strong></p>
+
+
+
+<p>As evolving threats to user privacy emerge, it is vital that messaging providers deliver new ways of increasing the security level for user messages and their host messaging platforms.&nbsp;&nbsp;The Sudo Platform provides secure E2EE messaging capabilities by incorporating Self-Sovereign Identity functionality, End-to-End Encryption, authenticatable messages, and strong encryption algorithms.&nbsp;&nbsp;Incorporating these industry standard elements enables the Sudo Platform’s E2EE messaging service to create the widest level of interoperability between different messaging providers, to help make E2EE communications the default online communication method, and to break down the communication barriers inherent in contemporary walled garden messaging models.&nbsp;&nbsp;</p>
+
+
+
+<p></p>
+
+
+
+<p></p>
+
+
+
+<hr class="wp-block-separator"/>
+
+
+
+<p><a href="applewebdata://AFB49A8F-1AC4-4789-9676-F5E8119849D5#_ftnref1"><sup>[1]</sup></a>&nbsp;“The Shocking Truth about How Many Emails Are Sent”, Campaign Monitor, May 2019,&nbsp;<a href="https://www.campaignmonitor.com/blog/email-marketing/2019/05/shocking-truth-about-how-many-emails-sent/">https://www.campaignmonitor.com/blog/email-marketing/2019/05/shocking-truth-about-how-many-emails-sent/</a></p>
+
+
+
+<p><a href="applewebdata://AFB49A8F-1AC4-4789-9676-F5E8119849D5#_ftnref2"><sup>[2]</sup></a>&nbsp;“Data Never Sleeps 5.0”, Domo,&nbsp;<a href="https://www.domo.com/learn/data-never-sleeps-5">https://www.domo.com/learn/data-never-sleeps-5</a></p>
+
+
+
+<p><a href="applewebdata://CA85425B-D411-4860-8FF3-C1837DBD1288#_ftnref1"><sup>[3]</sup></a>&nbsp;“The 21 scariest data breaches of 2018”, Paige Leskin, Business Insider, 30 Dec 2018, <a href="https://www.businessinsider.com/data-hacks-breaches-biggest-of-2018-2018-12#2-marriott-starwood-hotels-500-million-20">https://www.businessinsider.com/data-hacks-breaches-biggest-of-2018-2018-12#2-marriott-starwood-hotels-500-million-20</a></p>
+
+
+
+<p><a href="applewebdata://CA85425B-D411-4860-8FF3-C1837DBD1288#_ftnref2"><sup>[4]</sup></a>&nbsp;“FakesApp:&nbsp;&nbsp;A Vulnerability in WhatsApp”, Check Point Research, 7 Aug 2018,&nbsp;<a href="https://research.checkpoint.com/fakesapp-a-vulnerability-in-whatsapp/">https://research.checkpoint.com/fakesapp-a-vulnerability-in-whatsapp/</a></p>
+
+
+
+<p><a href="applewebdata://4F29CC63-2E01-4E12-BCC3-99542B2706AD#_ftnref1"><sup>[5]</sup></a>&nbsp;“Symantec Mobile Threat: Attackers Can Manipulate Your WhatsApp and Telegram Media Files”, Symantec, 15 Jul 2019, <br><a href="https://www.symantec.com/blogs/expert-perspectives/symantec-mobile-threat-defense-attackers-can-manipulate-your-whatsapp-and-telegram-media">https://www.symantec.com/blogs/expert-perspectives/symantec-mobile-threat-defense-attackers-can-manipulate-your-whatsapp-and-telegram-media</a></p>
+
+
+
+<p><a href="applewebdata://BA538AF8-5CC6-4327-830E-093D763FB231#_ftnref1"><sup>[6]</sup></a>&nbsp;“The Inevitable Rise of Self-Sovereign Identity”, Tobin et. al, Sovrin Foundation, 28 March 2017,&nbsp;<a href="https://sovrin.org/wp-content/uploads/2018/03/The-Inevitable-Rise-of-Self-Sovereign-Identity.pdf">https://sovrin.org/wp-content/uploads/2018/03/The-Inevitable-Rise-of-Self-Sovereign-Identity.pdf</a></p>
+
+
+
+<p><a href="applewebdata://ACF3342B-12C1-4AA7-9B9A-3780058C35EC#_ftnref1"><sup>[7</sup></a><a href="applewebdata://ACF3342B-12C1-4AA7-9B9A-3780058C35EC#_ftnref1"><sup>]</sup></a>&nbsp;Anonyome Labs Sudo Platform,&nbsp;<a href="https://anonyome.com/sudo-platform/">https://anonyome.com/sudo-platform/</a></p>
+
+
+
+<p><a href="applewebdata://ACF3342B-12C1-4AA7-9B9A-3780058C35EC#_ftnref2"><sup>[8]</sup></a>&nbsp;“Decentralized Identifiers (DIDs) v0.13”, W3C, 13 Aug 2019,&nbsp;<a href="https://w3c-ccg.github.io/did-spec/">https://w3c-ccg.github.io/did-spec/</a></p>
+
+
+
+<p><a href="applewebdata://91BB4B99-EEEC-4CA3-AB22-78EFC1EC848D#_ftnref1"><sup>[9]</sup></a>&nbsp;<a>Aries RFC 0023: DID Exchange Protocol 1.0, Hyperledger Foundation, 27 May 2019,&nbsp;</a><a href="https://github.com/hyperledger/aries-rfcs/blob/master/features/0023-did-exchange/README.md">https://github.com/hyperledger/aries-rfcs/blob/master/features/0023-did-exchange/README.md</a></p>
+
+
+
+<p><a href="applewebdata://78E6DC60-6779-4E66-AA2A-03BA33743C49#_ftnref1"><sup>[10]</sup></a>&nbsp;Aries RFC 0023: DID Exchange Protocol 1.0, Hyperledger Foundation, 27 May 2019,&nbsp;<a href="https://github.com/hyperledger/aries-rfcs/tree/master/features/0023-did-exchange">https://github.com/hyperledger/aries-rfcs/tree/master/features/0023-did-exchange</a></p>
+
+
+
+<p><a href="applewebdata://78E6DC60-6779-4E66-AA2A-03BA33743C49#_ftnref2"><sup>[11]</sup></a>&nbsp;Aries RFC 0019:&nbsp;&nbsp;Encryption Envelope, Hyperledger Foundation, 4 May 2019,&nbsp;<a href="https://github.com/hyperledger/aries-rfcs/tree/master/features/0019-encryption-envelope">https://github.com/hyperledger/aries-rfcs/tree/master/features/0019-encryption-envelope</a></p>
+
+
+
+<p><a href="applewebdata://78E6DC60-6779-4E66-AA2A-03BA33743C49#_ftnref3"><sup>[12]</sup></a>&nbsp;Aries RFC 0095: Basic Message Protocol 1.0, Hyperledger Foundation, 6 Aug 2019,&nbsp;<a href="https://github.com/hyperledger/aries-rfcs/tree/master/features/0095-basic-message">https://github.com/hyperledger/aries-rfcs/tree/master/features/0095-basic-message</a></p>
+<p>The post <a rel="nofollow" href="https://anonyome.com/2019/11/open-end-to-end-encrypted-messaging/">Open End-to-End Encrypted Messaging</a> appeared first on <a rel="nofollow" href="https://anonyome.com">Anonyome Labs</a>.</p>
+]]></content:encoded>
+					
+		
+		
+			</item>
+	</channel>
+</rss>
