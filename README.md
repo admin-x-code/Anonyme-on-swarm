@@ -16,7 +16,7 @@ To publish an existing blog, the easiest way for me is to:
     ```
     $wget -m -np -k "url"
     ```
-    The wget is used for retrieving files
+    The wget is used for retrieving files (Remember to follow fair data society principle)
     -np is not include parent directory (since all we need is the blog)
     -k is for downloading all js,css, and any other prerequisites
     and then the url.
