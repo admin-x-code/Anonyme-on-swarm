@@ -1,5 +1,5 @@
 # Anonyme-on-swarm
-<h3>Transferring a blog and its content to the Swarm decentralized storage and hosting it from there.</h3>
+<h3>Transferring a blog(www.anonyme.com/blog) and its content to the Swarm decentralized storage and hosting it from there.</h3>
 
 https://bah5acgza4wtxzscc2agatux2u55e3cfcpwvyfr7tqhdc2suo63gxd34iu4wq.bzz.link - MY WORK.
 
@@ -25,3 +25,5 @@ To publish an existing blog, the easiest way for me is to:
     and then published on SWARM. This is the result below.
     https://bah5acgza4wtxzscc2agatux2u55e3cfcpwvyfr7tqhdc2suo63gxd34iu4wq.bzz.link
     **Anonyme.com Blog published on Swarm.**
+    
+    Full credit to www.anonyme.com 
